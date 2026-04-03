@@ -1,6 +1,22 @@
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import CreateListingForm from '../components/listing/CreateListingForm';
 
 export default function CreateListing() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-24 text-center text-zinc-600">
+        Loading…
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: '/create-listing' }} />;
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">

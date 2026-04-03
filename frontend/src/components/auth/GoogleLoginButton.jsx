@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -15,13 +15,16 @@ function formatLoginError(error) {
 export default function GoogleLoginButton() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState(null);
 
   const handleSuccess = async (credentialResponse) => {
     setError(null);
     try {
       await login(credentialResponse.credential);
-      navigate('/profile', { replace: true });
+      const next =
+        typeof location.state?.from === 'string' ? location.state.from : '/profile';
+      navigate(next, { replace: true });
     } catch (err) {
       console.error('Login failed:', err);
       setError(formatLoginError(err));

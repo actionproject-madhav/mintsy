@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSpotPrices } from '../../services/pricesService';
+import MetalHistoryChart from './MetalHistoryChart';
 
 const money = (n) =>
   new Intl.NumberFormat('en-US', {
@@ -131,6 +132,15 @@ export default function SpotPricesPanel({ variant = 'full' }) {
       {disclaimer && (
         <div className="border-t border-zinc-100 bg-zinc-50 px-4 py-3 text-[11px] leading-relaxed text-zinc-500">
           {disclaimer}
+        </div>
+      )}
+
+      {!compact && (
+        <div className="border-t border-zinc-200 bg-zinc-100/80 p-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            Price history (Robinhood-style chart)
+          </p>
+          <MetalHistoryChart />
         </div>
       )}
     </div>

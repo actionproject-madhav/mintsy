@@ -1,11 +1,89 @@
 const Listing = require('../models/Listing');
+const User = require('../models/User');
+
+/** Only these fields may come from the client; seller / status / featured are server-controlled. */
+const CREATE_FIELDS = new Set([
+  'title',
+  'description',
+  'metalType',
+  'category',
+  'weight',
+  'purity',
+  'price',
+  'priceType',
+  'images',
+  'location',
+  'shippingAvailable',
+  'localPickupOnly',
+  'collegeOnly',
+  'college',
+]);
 
 exports.createListing = async (req, res) => {
   try {
+    const body = req.body || {};
+    const raw = {};
+    for (const key of CREATE_FIELDS) {
+      if (body[key] !== undefined) raw[key] = body[key];
+    }
+
+    const title = String(raw.title || '').trim();
+    const description = String(raw.description || '').trim();
+    const purity = String(raw.purity || '').trim();
+    const price = Number(raw.price);
+    const wVal = Number(raw.weight?.value);
+    const wUnit = raw.weight?.unit || 'oz';
+
+    if (!title || !description || !purity) {
+      return res.status(400).json({ success: false, message: 'Title, description, and purity are required.' });
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      return res.status(400).json({ success: false, message: 'Valid price is required.' });
+    }
+    if (!Number.isFinite(wVal) || wVal <= 0) {
+      return res.status(400).json({ success: false, message: 'Valid weight is required.' });
+    }
+    if (!Array.isArray(raw.images) || raw.images.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one image is required.' });
+    }
+
+    const hasMain = raw.images.some((img) => img && img.isMain);
+    const images = raw.images.map((img, i) => ({
+      url: String(img?.url || '').trim(),
+      publicId: String(img?.publicId || '').trim(),
+      isMain: Boolean(img?.isMain) || (!hasMain && i === 0),
+    }));
+
+    if (images.some((im) => !im.url)) {
+      return res.status(400).json({ success: false, message: 'Each image must include a URL.' });
+    }
+
     const listing = await Listing.create({
-      ...req.body,
-      seller: req.user.id
+      seller: req.user.id,
+      title,
+      description,
+      metalType: raw.metalType,
+      category: raw.category,
+      weight: { value: wVal, unit: wUnit },
+      purity,
+      price,
+      priceType: raw.priceType === 'negotiable' ? 'negotiable' : 'fixed',
+      images,
+      location: {
+        city: String(raw.location?.city || '').trim(),
+        state: String(raw.location?.state || '').trim(),
+        zipCode: String(raw.location?.zipCode || '').trim(),
+      },
+      shippingAvailable: Boolean(raw.shippingAvailable),
+      localPickupOnly: raw.localPickupOnly !== false,
+      collegeOnly: Boolean(raw.collegeOnly),
+      college: raw.college || undefined,
     });
+
+    await User.findByIdAndUpdate(req.user.id, {
+      $inc: { totalListings: 1, activeListings: 1 },
+    });
+
     res.status(201).json({ success: true, listing });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -98,6 +176,10 @@ exports.deleteListing = async (req, res) => {
 
     listing.status = 'removed';
     await listing.save();
+
+    await User.findByIdAndUpdate(req.user.id, {
+      $inc: { activeListings: -1 },
+    });
 
     res.json({ success: true, message: 'Listing removed' });
   } catch (error) {

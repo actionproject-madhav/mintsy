@@ -1,24 +1,44 @@
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import ListingCard from '../components/marketplace/ListingCard';
 import * as listingService from '../services/listingService';
+import { useAuth } from '../hooks/useAuth';
 
 export default function MyListings() {
+  const { user, loading: authLoading } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     const fetchMyListings = async () => {
       try {
         const data = await listingService.getUserListings();
-        setListings(data);
+        setListings(Array.isArray(data) ? data : []);
       } catch {
         console.error('Failed to fetch my listings');
+        setListings([]);
       } finally {
         setLoading(false);
       }
     };
     fetchMyListings();
-  }, []);
+  }, [user]);
+
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-24 text-center text-zinc-600">
+        Loading…
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: '/my-listings' }} />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-7xl">

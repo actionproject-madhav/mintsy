@@ -3,9 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import ImageUpload from './ImageUpload';
 import * as listingService from '../../services/listingService';
 
+function buildPayload(formData, images) {
+  const price = Number(formData.price);
+  const weightValue = Number(formData.weight.value);
+  const hasMain = images.some((img) => img.isMain);
+  const normalizedImages = images.map((img, i) => ({
+    url: img.url,
+    publicId: img.publicId,
+    isMain: Boolean(img.isMain) || (!hasMain && i === 0),
+  }));
+
+  return {
+    title: formData.title.trim(),
+    description: formData.description.trim(),
+    metalType: formData.metalType,
+    category: formData.category,
+    weight: {
+      value: weightValue,
+      unit: formData.weight.unit,
+    },
+    purity: formData.purity.trim(),
+    price,
+    priceType: 'fixed',
+    location: {
+      city: formData.location.city.trim(),
+      state: formData.location.state.trim(),
+      zipCode: formData.location.zipCode.trim(),
+    },
+    localPickupOnly: true,
+    images: normalizedImages,
+  };
+}
+
 export default function CreateListingForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -16,20 +49,40 @@ export default function CreateListingForm() {
     purity: '',
     price: '',
     location: { city: '', state: '', zipCode: '' },
-    isFeatured: false
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (images.length === 0) return;
-    
+    setError(null);
+    if (images.length === 0) {
+      setError('Add at least one photo.');
+      return;
+    }
+
+    const price = Number(formData.price);
+    const weightValue = Number(formData.weight.value);
+    if (!Number.isFinite(price) || price < 0) {
+      setError('Enter a valid price.');
+      return;
+    }
+    if (!Number.isFinite(weightValue) || weightValue <= 0) {
+      setError('Enter a valid weight greater than zero.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = { ...formData, images };
+      const data = buildPayload(formData, images);
       const listing = await listingService.createListing(data);
       navigate(`/listing/${listing._id}`);
-    } catch (error) {
-      console.error('Failed to create listing', error);
+    } catch (err) {
+      console.error('Failed to create listing', err);
+      const data = err?.response?.data;
+      const msg =
+        typeof data?.message === 'string'
+          ? data.message
+          : 'Could not save listing. Sign in and try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -37,6 +90,14 @@ export default function CreateListingForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-12 max-w-5xl mx-auto py-12">
+      {error && (
+        <div
+          className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
       <div className="grid lg:grid-cols-2 gap-16">
         <div className="space-y-10">
           <section className="bg-primary-dark/40 p-10 rounded-xl border border-white/5 shadow-2xl backdrop-blur-sm">
@@ -65,6 +126,8 @@ export default function CreateListingForm() {
                     <option value="silver">Silver Bullion</option>
                     <option value="platinum">Platinum</option>
                     <option value="palladium">Palladium</option>
+                    <option value="copper">Copper</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 <div>
@@ -78,6 +141,53 @@ export default function CreateListingForm() {
                     <option value="coins">Government Coins</option>
                     <option value="rounds">Private Rounds</option>
                     <option value="jewelry">Fine Jewelry</option>
+                    <option value="collectibles">Collectibles</option>
+                    <option value="scrap">Scrap</option>
+                    <option value="nuggets">Nuggets</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                    Weight
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="any"
+                    className="input-field py-4 font-bold"
+                    placeholder="e.g. 1"
+                    value={formData.weight.value}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        weight: { ...formData.weight, value: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                    Unit
+                  </label>
+                  <select
+                    className="input-field py-4 text-xs font-bold"
+                    value={formData.weight.unit}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        weight: { ...formData.weight, unit: e.target.value },
+                      })
+                    }
+                  >
+                    <option value="oz">oz troy</option>
+                    <option value="g">grams</option>
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                    <option value="dwt">dwt</option>
                   </select>
                 </div>
               </div>

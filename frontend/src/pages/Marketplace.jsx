@@ -1,113 +1,56 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import ListingCard from '../components/marketplace/ListingCard';
-
-// Sample data using your images
-const SAMPLE_LISTINGS = [
-  {
-    id: '1',
-    title: '2024 American Gold Eagle 1 oz - Brilliant Uncirculated',
-    price: 2650,
-    metalType: 'gold',
-    category: 'coins',
-    weight: { value: 1, unit: 'oz' },
-    images: [{ url: '/images/hero/gold.jpg', isMain: true }],
-    location: { city: 'Los Angeles', state: 'CA' },
-    seller: { name: 'John Smith', profilePicture: '', rating: 4.8 },
-    isFeatured: true
-  },
-  {
-    id: '2',
-    title: 'American Silver Eagle 1 oz 2023',
-    price: 35,
-    metalType: 'silver',
-    category: 'coins',
-    weight: { value: 1, unit: 'oz' },
-    images: [{ url: '/images/silver.jpg', isMain: true }],
-    location: { city: 'New York', state: 'NY' },
-    seller: { name: 'Sarah Johnson', profilePicture: '', rating: 4.9 },
-    isFeatured: false
-  },
-  {
-    id: '3',
-    title: '10 oz Gold Bar - PAMP Suisse',
-    price: 26500,
-    metalType: 'gold',
-    category: 'bars',
-    weight: { value: 10, unit: 'oz' },
-    images: [{ url: '/images/hero/gold.jpg', isMain: true }],
-    location: { city: 'Chicago', state: 'IL' },
-    seller: { name: 'Mike Davis', profilePicture: '', rating: 5.0 },
-    isFeatured: true
-  },
-  {
-    id: '4',
-    title: '1 oz Silver Round - Buffalo Design',
-    price: 28,
-    metalType: 'silver',
-    category: 'rounds',
-    weight: { value: 1, unit: 'oz' },
-    images: [{ url: '/images/silver.jpg', isMain: true }],
-    location: { city: 'Miami', state: 'FL' },
-    seller: { name: 'Emily Brown', profilePicture: '', rating: 4.7 },
-    isFeatured: false
-  },
-  {
-    id: '5',
-    title: 'Canadian Gold Maple Leaf 1 oz 2024',
-    price: 2680,
-    metalType: 'gold',
-    category: 'coins',
-    weight: { value: 1, unit: 'oz' },
-    images: [{ url: '/images/hero/gold.jpg', isMain: true }],
-    location: { city: 'Seattle', state: 'WA' },
-    seller: { name: 'David Wilson', profilePicture: '', rating: 4.6 },
-    isFeatured: false
-  },
-  {
-    id: '6',
-    title: '100 oz Silver Bar - Johnson Matthey',
-    price: 2850,
-    metalType: 'silver',
-    category: 'bars',
-    weight: { value: 100, unit: 'oz' },
-    images: [{ url: '/images/silver.jpg', isMain: true }],
-    location: { city: 'Boston', state: 'MA' },
-    seller: { name: 'Lisa Anderson', profilePicture: '', rating: 4.9 },
-    isFeatured: false
-  }
-];
+import * as listingService from '../services/listingService';
 
 export default function Marketplace() {
-  const [listings] = useState(SAMPLE_LISTINGS);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [filters, setFilters] = useState({
     metalType: '',
     category: '',
-    search: ''
+    search: '',
   });
 
-  const filteredListings = useMemo(() => {
-    let filtered = listings;
+  /** Server-side filters: GET /api/listings?metalType&category&search */
+  const queryParams = useMemo(() => {
+    const p = {};
+    if (filters.metalType) p.metalType = filters.metalType;
+    if (filters.category) p.category = filters.category;
+    if (filters.search.trim()) p.search = filters.search.trim();
+    return p;
+  }, [filters.metalType, filters.category, filters.search]);
 
-    if (filters.metalType) {
-      filtered = filtered.filter(l => l.metalType === filters.metalType);
-    }
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const data = await listingService.getListings(queryParams);
+        if (!cancelled) {
+          setListings(Array.isArray(data?.listings) ? data.listings : []);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setListings([]);
+          setLoadError(
+            e?.response?.data?.message || e?.message || 'Could not load listings.'
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    const t = setTimeout(load, filters.search ? 350 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [queryParams]);
 
-    if (filters.category) {
-      filtered = filtered.filter(l => l.category === filters.category);
-    }
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(l =>
-        l.title.toLowerCase().includes(searchLower) ||
-        l.location.city.toLowerCase().includes(searchLower) ||
-        l.location.state.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
-  }, [filters, listings]);
+  const filteredListings = listings;
 
   return (
     <div className="min-h-screen">
@@ -204,18 +147,25 @@ export default function Marketplace() {
             {/* Results Count */}
             <div className="mb-6">
               <p className="text-sm text-gray-600">
-                {filteredListings.length} {filteredListings.length === 1 ? 'listing' : 'listings'} found
+                {loading
+                  ? 'Loading…'
+                  : `${filteredListings.length} ${filteredListings.length === 1 ? 'listing' : 'listings'} found`}
               </p>
+              {loadError && (
+                <p className="mt-2 text-sm text-red-600" role="alert">
+                  {loadError}
+                </p>
+              )}
             </div>
 
             {/* Listings Grid */}
-            {filteredListings.length > 0 ? (
+            {!loading && filteredListings.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredListings.map(listing => (
-                  <ListingCard key={listing.id} listing={listing} />
+                {filteredListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} />
                 ))}
               </div>
-            ) : (
+            ) : !loading ? (
               <div className="empty-state">
                 <div className="empty-state-icon">
                   <MagnifyingGlassIcon />
@@ -230,6 +180,12 @@ export default function Marketplace() {
                 >
                   Clear Filters
                 </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-80 rounded-xl bg-zinc-200/80" />
+                ))}
               </div>
             )}
           </main>
