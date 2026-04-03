@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #165084;
+  --color-primary-dark: #13365c;
+  --color-primary-darker: #14253b;
+  --color-primary-accent: #1f4167;
+
+  --color-gold: #D4AF37;
+  --color-gold-light: #F4E5C3;
+  --color-gold-dark: #B8941F;
+
+  --color-gray-light: #8e9fb1;
+  --color-gray-DEFAULT: #6b7c8f;
+  --color-gray-dark: #4a5967;
+
+  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --font-sans: "system-ui", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-primary-darker);
+    color: white;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 cursor-pointer;
+  }
+
+  .btn-gold {
+    @apply bg-gold text-primary font-semibold py-2 px-6 rounded-lg hover:bg-gold-dark transition-colors duration-200 cursor-pointer;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 bg-primary-dark border border-gray-700 rounded-lg text-white placeholder-gray-light focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary;
+  }
+
+  .card {
+    @apply bg-primary-accent rounded-lg shadow-card hover:shadow-card-hover transition-shadow duration-200;
+  }
+}

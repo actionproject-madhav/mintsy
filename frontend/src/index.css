@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mintsy — neutral-first product UI (accent used sparingly) */
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #18181b;
+    background: #fafafa;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors duration-200;
+    @apply hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-6 py-2.5 text-sm font-medium text-zinc-900 shadow-sm transition-colors duration-200;
+    @apply hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400;
+  }
+
+  .btn-ghost {
+    @apply rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-colors;
+    @apply focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10;
+  }
+
+  .textarea-field {
+    @apply w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-colors;
+    @apply focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10;
+  }
+
+  .select-field {
+    @apply w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-zinc-900 transition-colors;
+    @apply focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10;
+  }
+
+  .card {
+    @apply overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-soft transition-colors duration-200;
+    @apply hover:border-zinc-300;
+  }
+
+  .card-featured {
+    @apply overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-soft transition-shadow;
+    @apply hover:shadow-md;
+  }
+
+  .card-content {
+    @apply p-6;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-gold {
+    @apply bg-zinc-100 text-zinc-700 ring-1 ring-inset ring-zinc-200;
+  }
+
+  .badge-featured {
+    @apply bg-zinc-900 text-white;
+  }
+
+  .badge-verified {
+    @apply bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200;
+  }
+
+  /* Brand wordmark — optional subtle highlight, not rainbow gradient */
+  .text-gradient-gold {
+    @apply font-semibold tracking-tight text-zinc-900;
+  }
+
+  .container-custom {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  .section-alt {
+    @apply bg-zinc-50/90 py-12 md:py-16 lg:py-20;
+  }
+
+  .glass-card {
+    @apply rounded-2xl border border-zinc-200/90 bg-white/90 shadow-glass backdrop-blur-xl;
+  }
+
+  .glass-card-dark {
+    @apply rounded-2xl border border-zinc-700/80 bg-zinc-900/95 backdrop-blur-xl;
+  }
+
+  /* Legacy pages using .btn-gold — map to same primary as product */
+  .btn-gold {
+    @apply inline-flex items-center justify-center rounded-lg bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800;
+  }
+
+  .image-container {
+    @apply relative overflow-hidden rounded-lg bg-zinc-100;
+  }
+
+  .image-container img {
+    @apply h-full w-full object-cover transition-transform duration-300;
+  }
+
+  .image-container:hover img {
+    @apply scale-[1.02];
+  }
+
+  .loading-spinner {
+    @apply inline-block h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-700;
+  }
+
+  .empty-state {
+    @apply flex flex-col items-center justify-center px-4 py-12 text-center;
+  }
+
+  .empty-state-icon {
+    @apply mb-4 h-16 w-16 text-zinc-400;
+  }
+
+  .empty-state-title {
+    @apply mb-2 text-xl font-semibold text-zinc-900;
+  }
+
+  .empty-state-description {
+    @apply mb-6 text-zinc-600;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
