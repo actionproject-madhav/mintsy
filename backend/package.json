@@ -31,5 +31,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
+  },
+  "optionalDependencies": {
+    "gcp-metadata": "7.0.1"
   }
 }
